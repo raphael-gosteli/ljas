@@ -1,10 +1,14 @@
 package com.raphaelgosteli.ljas;
 
+import com.raphaelgosteli.ljas.middleware.Middleware;
 import com.raphaelgosteli.ljas.router.Router;
+import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * ljas stands for lightweight java "application" server and does exactly this and nothing more. The project is based
@@ -12,7 +16,8 @@ import java.net.InetSocketAddress;
  */
 public class Ljas {
 
-    private HttpServer httpServer;
+    private static Map<HttpContext, Middleware> middlewareMap = new HashMap<>();
+    private static HttpServer httpServer;
 
     /**
      * Empty constructor used to do nothing
@@ -40,6 +45,15 @@ public class Ljas {
         listen(port, backlog);
     }
 
+    public static Map<HttpContext, Middleware> getMiddlewares() {
+        return middlewareMap;
+    }
+
+    public static void registerMiddleware(String route, Middleware middleware) {
+        middlewareMap.put(httpServer.createContext(route, new Router() {
+        }), middleware);
+    }
+
     /**
      * Creates a new instance of an {@link HttpServer} which listens on the specified port.
      *
@@ -58,8 +72,8 @@ public class Ljas {
      */
     public void listen(int port, int backlog) {
         try {
-            this.httpServer = HttpServer.create(new InetSocketAddress(port), backlog);
-            this.httpServer.start();
+            httpServer = HttpServer.create(new InetSocketAddress(port), backlog);
+            httpServer.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -72,7 +86,24 @@ public class Ljas {
      * @param route  the route for the {@link Router}.
      * @param router the {@link Router} which handles the request.
      */
-    public void on(String route, Router router) {
-        this.httpServer.createContext(route, router);
+    public HttpContext on(String route, Router router) {
+        return httpServer.createContext(route, router);
     }
+
+    /**
+     * @param middleware
+     */
+    public void use(Middleware middleware) {
+        use(on("/", new Router() {
+        }), middleware);
+    }
+
+    /**
+     * @param route
+     * @param middleware
+     */
+    public void use(HttpContext route, Middleware middleware) {
+        middlewareMap.put(route, middleware);
+    }
+
 }
