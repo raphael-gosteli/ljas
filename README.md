@@ -71,3 +71,38 @@ ljas.on("/", new Router() {
     }
 });
 ```
+
+### Serve static files
+To serve static files like stylesheets or JavaScript Files you can use a Middleware called StaticMiddleware which does excatly this.
+The Middleware looks for the requested file in a specified folder. If the file exists the Middlware will send the content of the file to the client otherwise the Router will look if there is and alternative handler for the request. Thanks to this feature you can serve static and dynamic files on the same base route.
+
+```java
+Ljas ljas = new Ljas(3000);
+ljas.use(ljas.on("/", new Router() {}), new StaticMiddleware("path\\to\\static\\directory"));
+```
+
+### HtmlView, HtmlRender and EventHandler
+The best way to server dynamic html files is to use the `HtmlView` Class which parses the Html file and gives you access to DOM. On the HtmlView you can register server-side EventHandler and within this Handler you can manipulte the DOM on the client side. The `HtmlRender` is the render engine for HtmlView's and is used when rendering the response using the `render` method.
+```java
+ljas.on("/", new Router() {
+    @Override
+    public void get(Request request, Response response) {
+        HtmlView htmlView = new HtmlView("static\\index.html");
+
+        Element title = htmlView.getDocument().getElementById("title"); // make sure to have an element exists
+        title.text("New title"); // change the text of the element with the id title
+
+        /* register click handler on the title element */
+        htmlView.addEventHandler(new ClickEventHandler(title) {
+            @Override
+            public void handle() {
+                System.out.println("Button clicked!");
+                getElement().text("Again new title");
+                getElement().parent().appendChild(new Element("p").text("Changed on the server!"));
+            }
+        });
+
+        response.render(new HtmlRender(), htmlView);
+    }
+});
+```
