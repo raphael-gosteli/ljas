@@ -69,10 +69,12 @@ public class Request {
     private Map<String, String> getCookies() {
         Map<String, String> cookieMap = new HashMap<>();
         List<String> cookies = headers.get("Cookie");
-        for (String cookie : cookies) {
-            String[] nameValue = cookie.split("=");
-            if (nameValue.length == 2) {
-                cookieMap.put(nameValue[0], nameValue[1]);
+        if (cookies != null) {
+            for (String cookie : cookies) {
+                String[] nameValue = cookie.split("=");
+                if (nameValue.length == 2) {
+                    cookieMap.put(nameValue[0], nameValue[1]);
+                }
             }
         }
         return cookieMap;
