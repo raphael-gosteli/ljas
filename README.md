@@ -71,3 +71,14 @@ ljas.on("/", new Router() {
     }
 });
 ```
+
+### Serve static files
+To serve static files like stylesheets or JavaScript Files you can use a Middleware called StaticMiddleware which does excatly this.
+The Middleware looks for the requested file in a specified folder. If the file exists the Middlware will send the content of the file to the client otherwise the Router will look if there is and alternative handler for the request. Thanks to this feature you can serve static and dynamic files on the same base route.
+
+```java
+Ljas ljas = new Ljas(3000);
+ljas.use(ljas.on("/", new Router() {}), new StaticMiddleware("path\\to\\static\\directory"));
+```
+
+
