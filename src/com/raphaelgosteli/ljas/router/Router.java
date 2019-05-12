@@ -1,9 +1,15 @@
 package com.raphaelgosteli.ljas.router;
 
+import com.raphaelgosteli.ljas.Ljas;
+import com.raphaelgosteli.ljas.middleware.Middleware;
 import com.raphaelgosteli.ljas.request.Request;
 import com.raphaelgosteli.ljas.response.Response;
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+
+import java.util.Map;
 
 /**
  * A {@link Router} is an implementation of the {@link HttpHandler} which is required for ljas. Within a router there are
@@ -19,23 +25,35 @@ public abstract class Router implements HttpHandler {
      */
     @Override
     public void handle(HttpExchange exchange) {
+
         Request request = new Request(exchange);
         Response response = new Response(exchange);
 
-        /* switching through the HTTP request method */
-        switch (exchange.getRequestMethod()) {
-            case "GET":
-                get(request, response);
-                break;
-            case "POST":
-                post(request, response);
-                break;
-            case "PUT":
-                put(request, response);
-                break;
-            case "DELETE":
-                delete(request, response);
-                break;
+        /* middleware */
+        for (Map.Entry<HttpContext, Middleware> middlewareEntry : Ljas.getMiddlewares().entrySet()) {
+            if (middlewareEntry.getKey() == exchange.getHttpContext()) {
+                middlewareEntry.getValue().handle(request, response);
+            }
+        }
+
+        /* check if the response has already been sent by the middleware */
+        if (!headersSent(exchange.getResponseHeaders())) {
+
+            /* switching through the HTTP request method */
+            switch (exchange.getRequestMethod()) {
+                case "GET":
+                    get(request, response);
+                    break;
+                case "POST":
+                    post(request, response);
+                    break;
+                case "PUT":
+                    put(request, response);
+                    break;
+                case "DELETE":
+                    delete(request, response);
+                    break;
+            }
         }
     }
 
@@ -74,5 +92,13 @@ public abstract class Router implements HttpHandler {
      * @param response the response which is used to respond to the request
      */
     public void delete(Request request, Response response) {
+    }
+
+    private boolean headersSent(Headers headers) {
+        try {
+            return headers.get("Content-length").get(0) != null;
+        } catch (NullPointerException ignored) {
+            return false;
+        }
     }
 }
