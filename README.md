@@ -1,3 +1,5 @@
+> :warning: **An experimental project, which might inspire you (or not)**
+
 # ljas
 ljas is a simple web server for Java based on the built-in HttpServer.
 The goal of this project is to create a simplified alternative for java web development with application servers while maintaining some of the capabilities.
